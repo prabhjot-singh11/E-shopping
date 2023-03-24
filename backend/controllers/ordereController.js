@@ -79,7 +79,7 @@ exports.myOrder = catchAsyncErrors(async(req,res,next)=>{
 
 exports.allOrder = catchAsyncErrors(async(req,res,next)=>{
     const order = await Order.find();
-    console.log(order);
+
     let totalAmount = 0;
     order.forEach(order=>{
         totalAmount += order.totalPrice
@@ -121,8 +121,9 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
 
 async function updateStock(id, quantity) {
     const product = await Product.findById(id);
-
-    product.stock = product.stock - quantity;
+  
+    product.stock= product.stock -quantity
+   
 
     await product.save({ validateBeforeSave: false })
 }

@@ -1,5 +1,6 @@
 const express = require("express")
 const { trusted } = require("mongoose")
+const bodyParser = require('body-parser');
 
 const app = require("../app")
 
@@ -8,20 +9,50 @@ const catchAsyncError = require("../middlewares/catchAsyncErrors")
 
 const Product = require("../models/product")
  const APIFeature = require('../utils/apifeature')
+const ErrorHandler = require("../utils/errorHandler")
+const cloudinary = require("cloudinary")
 
 
 
 
 exports.NewProduct = catchAsyncError  (async(req,res,next)=>{
-    console.log(req.body)
+    let images = []
+    if (typeof req.body.images === 'string') {
+        images.push(req.body.images)
+    } else {
+        images = req.body.images
+    }
+
+    let imagesLinks = [];
+
+    for (let i = 0; i < images.length; i++) {
+        const result = await cloudinary.v2.uploader.upload(images[i], {
+            folder: 'products'
+        });
+
+        imagesLinks.push({
+            public_id: result.public_id,
+            url: result.secure_url
+        })
+    }
+
+    req.body.images = imagesLinks
+    req.body.user = req.user.id;
+
 
    req.body.user=req.user.id
 
-    const product= await Product.create(req.body)
+
+
+  
+    const product=  Product.create(req.body)
+  
     res.status(201).json({
         success:true,
         product
     })
+
+  
 })
 
 
@@ -31,25 +62,47 @@ exports.NewProduct = catchAsyncError  (async(req,res,next)=>{
 
 
 exports.getProducts= catchAsyncError ( async(req,res,next)=>{
- 
 
 const resPerPage = 4;
-const productCount = await Product.countDocuments();
+const productsCount = await Product.countDocuments();
 
 const apifeature =new APIFeature(Product.find(),req.query)
                    .search()
                    .filter()
                    .pagination(resPerPage)
+             
 
 
-const products = await apifeature.query;
+            const products = await apifeature.query;
+            let filteredProductsCount = products.length;
+            apifeature.pagination(resPerPage)
 
+
+//   products = await apifeature.query;
+ setTimeout(()=>{
     res.status(200).json({
         success:true,
         count :products.length,
-        productCount, 
+        productsCount, 
+        resPerPage,
+        filteredProductsCount,
         products
     })
+ })
+  
+})
+
+
+// Get all products (Admin)  =>   /api/v1/admin/products
+exports.getAdminProducts = catchAsyncError(async (req, res, next) => {
+
+    const products = await Product.find();
+
+    res.status(200).json({
+        success: true,
+        products
+    })
+
 })
 
 
@@ -76,6 +129,38 @@ exports.updateProdect = async(req,res,next)=>{
             messege:"product not found"
         })
     }
+
+
+    let images = []
+    if (typeof req.body.images === 'string') {
+        images.push(req.body.images)
+    } else {
+        images = req.body.images
+    }
+
+    if (images !== undefined) {
+
+        // Deleting images associated with the product
+        for (let i = 0; i < product.images.length; i++) {
+            const result = await cloudinary.v2.uploader.destroy(product.images[i].public_id)
+        }
+
+        let imagesLinks = [];
+
+        for (let i = 0; i < images.length; i++) {
+            const result = await cloudinary.v2.uploader.upload(images[i], {
+                folder: 'products'
+            });
+
+            imagesLinks.push({
+                public_id: result.public_id,
+                url: result.secure_url
+            })
+        }
+
+        req.body.images = imagesLinks
+
+    }
     product = await Product.findByIdAndUpdate(req.params.id,req.body,{
         new:true,
         runValidators : true,
@@ -98,7 +183,14 @@ exports.deleteproduct= async(req,res,next)=>{
         })
     }
 
-    await Product.remove();
+ 
+    for (let i = 0; i < product.images.length; i++) {
+        const result = await cloudinary.v2.uploader.destroy(product.images[i].public_id)
+    }
+
+   
+
+    await Product.deleteOne();
     res.status(200).json({
         success:true,
         messege:"Product is deleted"
@@ -191,3 +283,32 @@ exports.deleteReview = catchAsyncError(async (req, res, next) => {
         success: true
     })
 })
+
+
+
+
+
+exports.Products= catchAsyncError ( async(req,res,next)=>{
+
+  
+    
+  const product =await Product.find({})
+                      
+    
+    
+           
+      const productsCount = await Product.countDocuments();
+    
+    //   products = await apifeature.query;
+     setTimeout(()=>{
+        res.status(200).json({
+            success:true,
+            productsCount,
+           
+         
+          
+            product
+        })
+     })
+      
+    })

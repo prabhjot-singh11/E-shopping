@@ -1,6 +1,8 @@
 const app = require("./app")
 
 const dotenv = require('dotenv')
+const cloudinary = require("cloudinary")
+const fileUpload = require("express-fileupload")
 
 
 
@@ -8,7 +10,7 @@ const dotenv = require('dotenv')
 
 process.on('uncaughtException', err=>{
     console.log(`ERORR : ${err.message}`);
-    console,log(`shutting down server due to uncaught excption`)
+    console.log(`shutting down server due to uncaught excption`)
     process.exit(1)
 })
 
@@ -17,9 +19,18 @@ const connectDatabse = require('./databse')
 
 
 
-dotenv.config({path:'backend/config.env'})
+if (process.env.NODE_ENV !== 'PRODUCTION') require ('dotenv').config({path:'backend/config.env'})
 
 connectDatabse();
+
+
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:process.env.CLOUDINARY_API_KEY,
+    api_secret:process.env.CLOUDINARY_API_SECRET
+
+})
 
 const server =    app.listen(process.env.PORT,()=>{
     console.log(`sever is running on ${process.env.PORT} `)
