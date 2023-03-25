@@ -10,7 +10,7 @@ const path = require('path')
 
 const errorMiddleware = require('./middlewares/errors')
 app.use(cors({
-    origin:"http://127.0.0.1:3000"
+    origin:"https://e-shop-0gqf.onrender.com/"
 }))
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
