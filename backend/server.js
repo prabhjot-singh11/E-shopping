@@ -4,6 +4,13 @@ const dotenv = require('dotenv')
 const cloudinary = require("cloudinary")
 const fileUpload = require("express-fileupload")
 
+const cors = require('cors')
+
+
+app.use(cors({
+    origin:"https://e-shop-0gqf.onrender.com"
+}))
+
 
 
 // handle uncounght 
